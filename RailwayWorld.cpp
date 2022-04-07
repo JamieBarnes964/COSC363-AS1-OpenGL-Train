@@ -67,6 +67,7 @@ void drawRailPath()
 	glEnable(GL_LIGHTING);
 }
 
+// Draw a single GL_QUAD_STRIP following the rail points with the given offtets of widths and height
 void drawRailStrip(int w1, int w2, int h1, int h2)
 {
 	glBegin(GL_QUAD_STRIP);
@@ -102,6 +103,7 @@ void drawRailStrip(int w1, int w2, int h1, int h2)
 	glEnd();
 }
 
+// Draw rails
 void drawRail()
 {
 	int w1 = 4;
@@ -119,7 +121,7 @@ void drawRail()
 	drawRailStrip(-5, -5, 1, 0); // INNER
 }
 
-
+// Draw Sleepers
 void drawSleepers()
 {
 	glColor3f(0.4, 0.2, 0.0);
@@ -139,6 +141,35 @@ void drawSleepers()
 			glVertex3f(ptx[i] + (v[0] * width) + (u[0] * thickness), height, ptz[i] + (v[1] * width) + (u[1] * thickness));
 		glEnd();
 	}
+}
+
+
+// Set the GL matrix to translate and rotate accurately on a point on the rail
+void railVehicle(int relative)
+{
+	int pos = indx + relative;
+	if (pos >= NPTS) pos = relative;
+	else if (pos < 0) pos += NPTS;
+
+	float u[] = {-1, 0, 0};
+	float v[] = {ptx[pos + 1] - ptx[pos], 0, ptz[pos + 1] - ptz[pos]};
+	if (pos == NPTS-1) {
+		v[0] = ptx[0] - ptx[pos];
+		v[2] = ptz[0] - ptz[pos];
+	}
+	float vLength = sqrt(pow(v[0], 2) + pow(v[1], 2) + pow(v[2], 2));
+	v[0] = v[0] / vLength;
+	v[1] = v[1] / vLength;
+	v[2] = v[2] / vLength;
+
+	float theta = 180 * acos(v[0] * u[0] + v[1] * u[1] + v[2] * u[2]) / M_PI;
+
+	if (pos > NPTS / 2) {
+		theta = -theta;
+	}
+
+	glTranslatef(ptx[pos], 0.8, ptz[pos]);
+	glRotatef(theta, 0, 1, 0);
 }
 
 //---------------------------------------------------------------------
@@ -195,61 +226,39 @@ void display(void)
 	glEnable(GL_LIGHTING);
 
 	floor();
-	// tracks(120, 10);  //mean radius 120 units, width 10 units
-	float u[] = {-1, 0, 0};
 
-	float v[] = {ptx[indx + 1] - ptx[indx], 0, ptz[indx + 1] - ptz[indx]};
-	float vLength = sqrt(pow(v[0], 2) + pow(v[1], 2) + pow(v[2], 2));
-	v[0] = v[0] / vLength;
-	v[1] = v[1] / vLength;
-	v[2] = v[2] / vLength;
-
-	float theta = 180 * acos(v[0] * u[0] + v[1] * u[1] + v[2] * u[2]) / M_PI;
-
-	if (indx > NPTS / 2) {
-		theta = -theta;
-	}
-
+	// Draw Train
 	glPushMatrix();
-		glTranslatef(ptx[indx], 1, ptz[indx]);
-		glRotatef(theta, 0, 1, 0);
-
+		// Draw engine
 		glPushMatrix();
-			engine();		 //locomotive
+			railVehicle(0);
+			engine();
 		glPopMatrix();
 
+		// Draw spotlight
 		glPushMatrix();
+			railVehicle(0);
 			glLightfv(GL_LIGHT1, GL_POSITION, spt_pos);
 		glPopMatrix();
 
 		glPushMatrix();
+			railVehicle(0);
 			glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spt_dir);
 		glPopMatrix();
 
+		// Draw wagons
+		for (int i = 1; i<4; i++) {
+			glPushMatrix();
+				railVehicle(-23 * i);
+				wagon();
+			glPopMatrix();
+		}
 	glPopMatrix();
 
+	// Draw tracks
 	drawRail();
 	drawSleepers();
 
-	// glPushMatrix();
-	// 	glRotatef(theta-10.5, 0, 1, 0);
-	// 	glTranslatef(0, 0, -120);
-	// 	wagon();
-	// glPopMatrix();
-	//
-	// glPushMatrix();
-	// 	glRotatef(theta-21, 0, 1, 0);
-	// 	glTranslatef(0, 0, -120);
-	// 	wagon();
-	// glPopMatrix();
-	//
-	// glPushMatrix();
-	// 	glRotatef(theta-31.5, 0, 1, 0);
-	// 	glTranslatef(0, 0, -120);
-	// 	wagon();
-	// glPopMatrix();
-
-	// drawRailPath();
 
 	glutSwapBuffers();   //Useful for animation
 }
