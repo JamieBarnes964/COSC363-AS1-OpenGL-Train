@@ -21,6 +21,29 @@ float ptx[NPTS], ptz[NPTS];
 int indx = 0;
 
 
+float angle=0, look_x, look_z=-1., eye_x, eye_z, height=10.;  //Camera parameters
+
+void special(int key, int x, int y)
+{
+	if(key == GLUT_KEY_LEFT) angle -= 0.1;  //Change direction
+	else if(key == GLUT_KEY_RIGHT) angle += 0.1;
+	else if(key == GLUT_KEY_PAGE_UP) height += 1;
+	else if(key == GLUT_KEY_PAGE_DOWN) height -= 1;
+	else if(key == GLUT_KEY_DOWN)
+	{  //Move backward
+		eye_x -= 1*sin(angle);
+		eye_z += 1*cos(angle);
+	}
+	else if(key == GLUT_KEY_UP)
+	{ //Move forward
+		eye_x += 1*sin(angle);
+		eye_z -= 1*cos(angle);
+	}
+
+	look_x = eye_x + 100*sin(angle);
+	look_z = eye_z - 100*cos(angle);
+	glutPostRedisplay();
+}
 
 //Reads rail path data from Oval.txt
 void loadRailPath()
@@ -35,7 +58,7 @@ void loadRailPath()
 
 void drawRailPath()
 {
-	glColor3f(0.0, 0.0, 1.0);
+	glColor3f(0.0, 0.0, 0.3);
 	glDisable(GL_LIGHTING);
 	glBegin(GL_LINE_LOOP);
 	for (int i = 0; i < NPTS; i++)
@@ -44,72 +67,78 @@ void drawRailPath()
 	glEnable(GL_LIGHTING);
 }
 
+void drawRailStrip(int w1, int w2, int h1, int h2)
+{
+	glBegin(GL_QUAD_STRIP);
+		for (int i = 0; i < NPTS; i++) {
+			if (i == 0) {
+				float u[] = {ptx[0] - ptx[NPTS-1], ptz[0] - ptz[NPTS-1]};
+				float uLength = sqrt(pow(u[0], 2) + pow(u[1], 2));
+				u[0] = u[0] / uLength;
+				u[1] = u[1] / uLength;
+				float v[] = {u[1], -u[0]};
+
+				glVertex3f(ptx[NPTS-1] - (v[0] * w1), h1, ptz[NPTS-1] - (v[1] * w1));
+				glVertex3f(ptx[NPTS-1] - (v[0] * w2), h2, ptz[NPTS-1] - (v[1] * w2));
+			}
+
+			float u[] = {ptx[i + 1] - ptx[i], ptz[i + 1] - ptz[i]};
+
+			if (i == NPTS-1) {
+				u[0] = ptx[0] - ptx[i];
+				u[1] = ptz[0] - ptz[i];
+			}
+
+			float uLength = sqrt(pow(u[0], 2) + pow(u[1], 2));
+			u[0] = u[0] / uLength;
+			u[1] = u[1] / uLength;
+			float v[] = {u[1], -u[0]};
+
+			if (h1 != h2) glNormal3f(v[0], 0, v[1]);
+			else glNormal3f(0, 1, 0);
+			glVertex3f(ptx[i] - (v[0] * w1), h1, ptz[i] - (v[1] * w1));
+			glVertex3f(ptx[i] - (v[0] * w2), h2, ptz[i] - (v[1] * w2));
+		}
+	glEnd();
+}
+
 void drawRail()
 {
 	int w1 = 4;
 	int w2 = 5;
-	glColor3f(1,0,1);
-	glNormal3f(0.0, 1.0, 0.0);
-	glBegin(GL_QUAD_STRIP);
-		for (int i = 0; i < NPTS; i++) {
-			if (i == 0) {
-				float u[] = {ptx[0] - ptx[NPTS-1], ptz[0] - ptz[NPTS-1]};
-				float uLength = sqrt(pow(u[0], 2) + pow(u[1], 2));
-				u[0] = u[0] / uLength;
-				u[1] = u[1] / uLength;
-				float v[] = {u[1], -u[0]};
+	glColor3f(0.1, 0.1, 0.2);
 
-				glVertex3f(ptx[NPTS-1] - (v[0] * w1), 1, ptz[NPTS-1] - (v[1] * w1));
-				glVertex3f(ptx[NPTS-1] - (v[0] * w2), 1, ptz[NPTS-1] - (v[1] * w2));
-			}
+	// Outer
+	drawRailStrip(5, 6, 1, 1); // TOP
+	drawRailStrip(6, 6, 1, 0); // OUTER
+	drawRailStrip(5, 5, 1, 0); // INNER
 
+	// Inner
+	drawRailStrip(-5, -6, 1, 1); // TOP
+	drawRailStrip(-6, -6, 1, 0); // OUTER
+	drawRailStrip(-5, -5, 1, 0); // INNER
+}
+
+
+void drawSleepers()
+{
+	glColor3f(0.4, 0.2, 0.0);
+	float width=8.0, thickness=0.5, height=0.1;
+
+	for (int i = 0; i < NPTS; i += 3) {
+		glBegin(GL_QUADS);
 			float u[] = {ptx[i + 1] - ptx[i], ptz[i + 1] - ptz[i]};
-
-			if (i == NPTS-1) {
-				u[0] = ptx[0] - ptx[i];
-				u[1] = ptz[0] - ptz[i];
-			}
-
 			float uLength = sqrt(pow(u[0], 2) + pow(u[1], 2));
 			u[0] = u[0] / uLength;
 			u[1] = u[1] / uLength;
 			float v[] = {u[1], -u[0]};
 
-			glVertex3f(ptx[i] - (v[0] * w1), 1, ptz[i] - (v[1] * w1));
-			glVertex3f(ptx[i] - (v[0] * w2), 1, ptz[i] - (v[1] * w2));
-		}
-	glEnd();
-
-	glBegin(GL_QUAD_STRIP);
-		for (int i = 0; i < NPTS; i++) {
-			if (i == 0) {
-				float u[] = {ptx[0] - ptx[NPTS-1], ptz[0] - ptz[NPTS-1]};
-				float uLength = sqrt(pow(u[0], 2) + pow(u[1], 2));
-				u[0] = u[0] / uLength;
-				u[1] = u[1] / uLength;
-				float v[] = {u[1], -u[0]};
-
-				glVertex3f(ptx[NPTS-1] + (v[0] * w1), 1, ptz[NPTS-1] + (v[1] * w1));
-				glVertex3f(ptx[NPTS-1] + (v[0] * w2), 1, ptz[NPTS-1] + (v[1] * w2));
-			}
-
-			float u[] = {ptx[i + 1] - ptx[i], ptz[i + 1] - ptz[i]};
-
-			if (i == NPTS-1) {
-				u[0] = ptx[0] - ptx[i];
-				u[1] = ptz[0] - ptz[i];
-			}
-
-			float uLength = sqrt(pow(u[0], 2) + pow(u[1], 2));
-			u[0] = u[0] / uLength;
-			u[1] = u[1] / uLength;
-			float v[] = {u[1], -u[0]};
-
-			glVertex3f(ptx[i] + (v[0] * w1), 1, ptz[i] + (v[1] * w1));
-			glVertex3f(ptx[i] + (v[0] * w2), 1, ptz[i] + (v[1] * w2));
-		}
-
-	glEnd();
+			glVertex3f(ptx[i] + (v[0] * width) - (u[0] * thickness), height, ptz[i] + (v[1] * width) - (u[1] * thickness));
+			glVertex3f(ptx[i] - (v[0] * width) - (u[0] * thickness), height, ptz[i] - (v[1] * width) - (u[1] * thickness));
+			glVertex3f(ptx[i] - (v[0] * width) + (u[0] * thickness), height, ptz[i] - (v[1] * width) + (u[1] * thickness));
+			glVertex3f(ptx[i] + (v[0] * width) + (u[0] * thickness), height, ptz[i] + (v[1] * width) + (u[1] * thickness));
+		glEnd();
+	}
 }
 
 //---------------------------------------------------------------------
@@ -160,10 +189,10 @@ void display(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	gluLookAt (0, 50, 150, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	gluLookAt(eye_x, height, eye_z,  look_x, 0, look_z,   0, 1, 0);
 	glLightfv(GL_LIGHT0, GL_POSITION, lgt_pos);   //light position
 
-	drawRailPath();
+	glEnable(GL_LIGHTING);
 
 	floor();
 	// tracks(120, 10);  //mean radius 120 units, width 10 units
@@ -181,30 +210,26 @@ void display(void)
 		theta = -theta;
 	}
 
-	float w[] = {u[1]*v[2] - u[2]*v[1], u[2]*v[0] - u[0]*v[2], u[0]*v[1] - u[1]*v[0]};
-	// cout << theta << "\n";
-
-
-
 	glPushMatrix();
+		glTranslatef(ptx[indx], 1, ptz[indx]);
+		glRotatef(theta, 0, 1, 0);
 
 		glPushMatrix();
-			glTranslatef(ptx[indx], 1, ptz[indx]);
-			glRotatef(theta, 0, 1, 0);
 			engine();		 //locomotive
 		glPopMatrix();
 
-		// glPushMatrix();
-		// 	glLightfv(GL_LIGHT1, GL_POSITION, spt_pos);
-		// glPopMatrix();
-		//
-		// glPushMatrix();
-		// 	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spt_dir);
-		// glPopMatrix();
+		glPushMatrix();
+			glLightfv(GL_LIGHT1, GL_POSITION, spt_pos);
+		glPopMatrix();
+
+		glPushMatrix();
+			glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spt_dir);
+		glPopMatrix();
 
 	glPopMatrix();
 
 	drawRail();
+	drawSleepers();
 
 	// glPushMatrix();
 	// 	glRotatef(theta-10.5, 0, 1, 0);
@@ -224,7 +249,7 @@ void display(void)
 	// 	wagon();
 	// glPopMatrix();
 
-	drawRailPath();
+	// drawRailPath();
 
 	glutSwapBuffers();   //Useful for animation
 }
@@ -253,6 +278,7 @@ int main(int argc, char** argv)
    initialize ();
    glutTimerFunc(25, myTimer, 0);
    glutDisplayFunc(display);
+   glutSpecialFunc(special);
    glutMainLoop();
    return 0;
 }
