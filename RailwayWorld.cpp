@@ -12,13 +12,36 @@
 #include "RailModels.h"
 using namespace std;
 
-float theta = 0;
+#include "loadBMP.h"
+
+const int numTextures = 4;
+GLuint txId[numTextures];
+
+
 
 const int NPTS = 492; 	// Number of points on the rail path
 
 float ptx[NPTS], ptz[NPTS];
 
 int indx = 0;
+
+const int trainPauseIndx = 290;
+
+const int updatePeriod = 50; // The timer period in ms for incrementing the global time
+
+const int lengthStop = 2000; // The length of time in ms that the train stops for
+
+const int extraPeriods = lengthStop / updatePeriod; // The extra number of periods
+
+const int maxGlobalTime = NPTS + extraPeriods; // The max number of update periods before the system returns to it's original state
+
+int globalTime = 0; // The current number update periods the system has done since it's original state.
+
+
+
+
+
+
 
 
 float angle=0, look_x, look_z=-1., eye_x, eye_z, height=10.;  //Camera parameters
@@ -43,6 +66,41 @@ void special(int key, int x, int y)
 	look_x = eye_x + 100*sin(angle);
 	look_z = eye_z - 100*cos(angle);
 	glutPostRedisplay();
+}
+
+
+void loadTexture()
+{
+	glGenTextures(numTextures, txId); 				// Create a Texture object
+
+	glBindTexture(GL_TEXTURE_2D, txId[0]);		//Use this texture
+    loadBMP("stationBrick.bmp");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	//Set texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+
+	glBindTexture(GL_TEXTURE_2D, txId[1]);		//Use this texture
+    loadBMP("stationDoor.bmp");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	//Set texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+
+	glBindTexture(GL_TEXTURE_2D, txId[2]);		//Use this texture
+    loadBMP("stationRoof.bmp");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	//Set texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+
+	glBindTexture(GL_TEXTURE_2D, txId[3]);		//Use this texture
+    loadBMP("WagonTexture.bmp");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	//Set texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+
+
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	glDisable(GL_TEXTURE_2D);
 }
 
 
@@ -304,6 +362,7 @@ void initialize(void)
     float grey[4] = {0.2, 0.2, 0.2, 1.0};
     float white[4]  = {1.0, 1.0, 1.0, 1.0};
 
+
 	loadRailPath();
 
 	glEnable(GL_LIGHTING);
@@ -333,11 +392,15 @@ void initialize(void)
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
     gluPerspective(60., 1.0, 10.0, 1000.0);   //Perspective projection
+
+	loadTexture();
 }
 
 //-------------------------------------------------------------------
 void display(void)
 {
+	glDisable(GL_TEXTURE_2D);
+
 	float lgt_pos[] = {0.0f, 50.0f, 0.0f, 1.0f};  //light0 position (directly above the origin)
 	float spt_pos[] = {-10.0f, 14.0f, 0.0f, 1.0f};  //light1 position (directly above the origin)
 	float spt_dir[] = {-1.0f, -1.0f, 0.0f};  //light1 direction (directly above the origin)
@@ -376,11 +439,11 @@ void display(void)
 		for (int i = 0; i<3; i++) {
 			glPushMatrix();
 				railVehicle(-23 * (i+1));
-				wagon();
+				wagon(txId[3]);
 			glPopMatrix();
 		}
 
-		station();
+		// station();
 	glPopMatrix();
 
 	glPushMatrix();
@@ -392,7 +455,8 @@ void display(void)
 	drawRail();
 	drawSleepers();
 
-	station();
+	// glEnable(GL_TEXTURE_2D);
+	station(txId[1], txId[0], txId[2]);
 
 
 	glutSwapBuffers();   //Useful for animation
@@ -404,10 +468,12 @@ void display(void)
 //---------------------------------------------------------------------
 void myTimer(int value)
 {
-	indx += 1;
-	if (indx == NPTS) indx = 0;
+	globalTime += 1;
+	if (globalTime == maxGlobalTime) globalTime = 0;
+	if (globalTime < trainPauseIndx) indx = globalTime;
+	else if (globalTime >= trainPauseIndx + extraPeriods) indx = globalTime - extraPeriods;
 	glutPostRedisplay();
-	glutTimerFunc(25, myTimer, 0);
+	glutTimerFunc(updatePeriod, myTimer, 0);
 }
 
 
@@ -415,12 +481,12 @@ void myTimer(int value)
 int main(int argc, char** argv)
 {
    glutInit(&argc, argv);
-   glutInitDisplayMode (GLUT_DOUBLE|GLUT_DEPTH);
+   glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB| GLUT_DEPTH);
    glutInitWindowSize (600, 600);
    glutInitWindowPosition (50, 50);
    glutCreateWindow ("Toy Train");
    initialize ();
-   glutTimerFunc(25, myTimer, 0);
+   glutTimerFunc(updatePeriod, myTimer, 0);
    glutDisplayFunc(display);
    glutSpecialFunc(special);
    glutMainLoop();

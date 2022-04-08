@@ -11,6 +11,6 @@ void tracks(float, float) ;
 
 void engine();
 
-void wagon();
+void wagon(GLuint);
 
-void station();
+void station(GLuint, GLuint, GLuint);

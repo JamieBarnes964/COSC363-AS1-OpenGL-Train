@@ -9,6 +9,7 @@
 #include <GL/freeglut.h>
 #include "RailModels.h"
 
+
 //--------------- GROUND PLANE ------------------------------------
 // This is a square shaped region on the xz-plane of size 400x400 units
 // centered at the origin.  This region is constructed using small quads
@@ -173,21 +174,52 @@ void engine()
 // This simple model of a rail wagon consists of the base,
 // and a cube(!)
 //--------------------------------------------------------
-void wagon()
+void wagon(GLuint tex)
 {
     base();
 
-    glColor4f(0.0, 1.0, 1.0, 1.0);
-    glPushMatrix();
-      glTranslatef(0.0, 10.0, 0.0);
-      glScalef(18.0, 10.0, 10.0);
-      glutSolidCube(1.0);
-    glPopMatrix();
+	glColor4f(1.0, 1.0, 1.0, 1.0);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glPushMatrix();
+		glTranslatef(0.0, 10.0, 0.0);
+		glBegin(GL_QUADS);
+			glNormal3f(-1, 0, 0);
+			glTexCoord2f(0.33, 0); glVertex3f(-9, -5, -5);
+			glTexCoord2f(0.66, 0); glVertex3f(9, -5, -5);
+			glTexCoord2f(0.66, 0.328); glVertex3f(9, 5, -5);
+			glTexCoord2f(0.33, 0.328); glVertex3f(-9, 5, -5);
+
+			glNormal3f(1, 0, 0);
+			glTexCoord2f(0.33, 0); glVertex3f(-9, -5, 5);
+			glTexCoord2f(0.66, 0); glVertex3f(9, -5, 5);
+			glTexCoord2f(0.66, 0.328); glVertex3f(9, 5, 5);
+			glTexCoord2f(0.33, 0.328); glVertex3f(-9, 5, 5);
+
+			glNormal3f(0, 0, -1);
+			glTexCoord2f(0, 0.828); glVertex3f(-9, -5, -5);
+			glTexCoord2f(0, 0.449); glVertex3f(-9, -5, 5);
+			glTexCoord2f(1, 0.449); glVertex3f(-9, 5, 5);
+			glTexCoord2f(1, 0.828); glVertex3f(-9, 5, -5);
+
+			glNormal3f(0, 0, 1);
+			glTexCoord2f(0, 0.828); glVertex3f(9, -5, 5);
+			glTexCoord2f(0, 0.449); glVertex3f(9, -5, -5);
+			glTexCoord2f(1, 0.449); glVertex3f(9, 5, -5);
+			glTexCoord2f(1, 0.828); glVertex3f(9, 5, 5);
+
+			glNormal3f(0, 1, 0);
+			glTexCoord2f(0, 0.828); glVertex3f(9, 5, 5);
+			glTexCoord2f(0, 0.449); glVertex3f(9, 5, -5);
+			glTexCoord2f(1, 0.449); glVertex3f(-9, 5, -5);
+			glTexCoord2f(1, 0.828); glVertex3f(-9, 5, 5);
+		glEnd();
+	glPopMatrix();
 }
 
 
 // Station
-void station()
+void station(GLuint frontTex, GLuint wallsTex, GLuint roofTex)
 {
 	glColor3f(0.5, 0.5, 0.5);
 
@@ -228,73 +260,84 @@ void station()
 	glPopMatrix();
 
 	// Building
+	glColor4f(1.0, 1.0, 1.0, 1.0);
 	glPushMatrix();
 		glTranslatef(0, 0, 20);
+		glColor3f(1., 1., 1.);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, wallsTex);
 		glBegin(GL_QUADS);
-			glNormal3f(-1, 0, 0);
-			glVertex3f(-50, 0, 0);
-			glVertex3f(-50, 0, 20);
-			glVertex3f(-50, 20, 20);
-			glVertex3f(-50, 20, 0);
+			glPushMatrix();
+				glNormal3f(-1, 0, 0);
+				glTexCoord2f(0, 0); glVertex3f(-50, 0, 0);
+				glTexCoord2f(1, 0); glVertex3f(-50, 0, 20);
+				glTexCoord2f(1, 1); glVertex3f(-50, 20, 20);
+				glTexCoord2f(0, 1); glVertex3f(-50, 20, 0);
 
-			glNormal3f(1, 0, 0);
-			glVertex3f(50, 0, 0);
-			glVertex3f(50, 0, 20);
-			glVertex3f(50, 20, 20);
-			glVertex3f(50, 20, 0);
+				glNormal3f(1, 0, 0);
+				glTexCoord2f(1, 0); glVertex3f(50, 0, 0);
+				glTexCoord2f(0, 0); glVertex3f(50, 0, 20);
+				glTexCoord2f(0, 1); glVertex3f(50, 20, 20);
+				glTexCoord2f(1, 1); glVertex3f(50, 20, 0);
 
-			glNormal3f(0, 0, -1);
-			glVertex3f(-50, 0, 0);
-			glVertex3f(50, 0, 0);
-			glVertex3f(50, 20, 0);
-			glVertex3f(-50, 20, 0);
+				glNormal3f(0, 0, 1);
+				glTexCoord2f(5, 0); glVertex3f(50, 0, 20);
+				glTexCoord2f(0, 0); glVertex3f(-50, 0, 20);
+				glTexCoord2f(0, 1); glVertex3f(-50, 20, 20);
+				glTexCoord2f(5, 1); glVertex3f(50, 20, 20);
+			glPopMatrix();
+		glEnd();
 
-			glNormal3f(0, 0, 1);
-			glVertex3f(50, 0, 20);
-			glVertex3f(-50, 0, 20);
-			glVertex3f(-50, 20, 20);
-			glVertex3f(50, 20, 20);
-
-			glNormal3f(0, 1, 0);
-			glVertex3f(50, 20, 20);
-			glVertex3f(-50, 20, 20);
-			glVertex3f(-50, 20, 0);
-			glVertex3f(50, 20, 0);
+		glBindTexture(GL_TEXTURE_2D, frontTex);
+		glBegin(GL_QUADS);
+			glPushMatrix();
+				glNormal3f(0, 0, -1);
+				glTexCoord2f(0., 0.); glVertex3f(-50, 5, 0);
+				glTexCoord2f(3., 0.); glVertex3f(50, 5, 0);
+				glTexCoord2f(3., 0.5); glVertex3f(50, 20, 0);
+				glTexCoord2f(0., 0.5); glVertex3f(-50, 20, 0);
+			glPopMatrix();
 		glEnd();
 	glPopMatrix();
 
 	// Roof
-	glPushMatrix();
-		glBegin(GL_QUADS);
-			glNormal3f(0, 0.8944, -0.4473);
-			glVertex3f(50, 30, 20);
-			glVertex3f(-50, 30, 20);
-			glVertex3f(-50, 20, 0);
-			glVertex3f(50, 20, 0);
+	glColor3f(1., 1., 1.);
+	glBindTexture(GL_TEXTURE_2D, roofTex);
+	glBegin(GL_QUADS);
+		glNormal3f(0, 0.8944, -0.4473);
+		glTexCoord2f(5., 1.); glVertex3f(50, 30, 20);
+		glTexCoord2f(0., 1.); glVertex3f(-50, 30, 20);
+		glTexCoord2f(0., 0.); glVertex3f(-50, 20, 0);
+		glTexCoord2f(5., 0.); glVertex3f(50, 20, 0);
 
-			glNormal3f(0, 0.8944, 0.4473);
-			glVertex3f(50, 30, 20);
-			glVertex3f(-50, 30, 20);
-			glVertex3f(-50, 20, 40);
-			glVertex3f(50, 20, 40);
+		glNormal3f(0, 0.8944, 0.4473);
+		glTexCoord2f(5., 0.); glVertex3f(50, 30, 20);
+		glTexCoord2f(0., 0.); glVertex3f(-50, 30, 20);
+		glTexCoord2f(0., 1.); glVertex3f(-50, 20, 40);
+		glTexCoord2f(5., 1.); glVertex3f(50, 20, 40);
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
 
-			glNormal3f(0, -1, 0);
-			glVertex3f(50, 20, 0);
-			glVertex3f(-50, 20, 0);
-			glVertex3f(-50, 20, 40);
-			glVertex3f(50, 20, 40);
-		glEnd();
+	glColor3f(1., 1., 1.);
+	glBegin(GL_QUADS);
+		glNormal3f(0, -1, 0);
+		glVertex3f(50, 20, 0);
+		glVertex3f(-50, 20, 0);
+		glVertex3f(-50, 20, 40);
+		glVertex3f(50, 20, 40);
+	glEnd();
 
-		glBegin(GL_TRIANGLES);
-			glNormal3f(1, 0, 0);
-			glVertex3f(50, 20, 40);
-			glVertex3f(50, 30, 20);
-			glVertex3f(50, 20, 0);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, wallsTex);
+	glBegin(GL_TRIANGLES);
+		glNormal3f(1, 0, 0);
+		glTexCoord2f(2., 0.); glVertex3f(50, 20, 40);
+		glTexCoord2f(1., .5); glVertex3f(50, 30, 20);
+		glTexCoord2f(0., 0.); glVertex3f(50, 20, 0);
 
-			glNormal3f(-1, 0, 0);
-			glVertex3f(-50, 20, 40);
-			glVertex3f(-50, 30, 20);
-			glVertex3f(-50, 20, 0);
-		glEnd();
-	glPopMatrix();
+		glNormal3f(-1, 0, 0);
+		glTexCoord2f(2., 0.); glVertex3f(-50, 20, 40);
+		glTexCoord2f(1., .5); glVertex3f(-50, 30, 20);
+		glTexCoord2f(0., 0.); glVertex3f(-50, 20, 0);
+	glEnd();
 }
