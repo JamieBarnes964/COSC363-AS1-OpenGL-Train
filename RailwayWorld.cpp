@@ -45,6 +45,20 @@ void special(int key, int x, int y)
 	glutPostRedisplay();
 }
 
+
+void normal(float x1, float y1, float z1,
+            float x2, float y2, float z2,
+		      float x3, float y3, float z3 )
+{
+	  float nx, ny, nz;
+	  nx = y1*(z2-z3)+ y2*(z3-z1)+ y3*(z1-z2);
+	  ny = z1*(x2-x3)+ z2*(x3-x1)+ z3*(x1-x2);
+	  nz = x1*(y2-y3)+ x2*(y3-y1)+ x3*(y1-y2);
+
+      glNormal3f(nx, ny, nz);
+}
+
+
 //Reads rail path data from Oval.txt
 void loadRailPath()
 {
@@ -141,6 +155,118 @@ void drawSleepers()
 			glVertex3f(ptx[i] + (v[0] * width) + (u[0] * thickness), height, ptz[i] + (v[1] * width) + (u[1] * thickness));
 		glEnd();
 	}
+}
+
+
+void getPathPointVector(float *u, int point)
+{
+	u[0] = ptx[point + 1] - ptx[point];
+	u[1] = ptz[point + 1] - ptz[point];
+
+	if (point == NPTS-1) {
+		u[0] = ptx[0] - ptx[point];
+		u[1] = ptz[0] - ptz[point];
+	}
+
+	float uLength = sqrt(pow(u[0], 2) + pow(u[1], 2));
+	u[0] = u[0] / uLength;
+	u[1] = u[1] / uLength;
+}
+
+
+// Draw Tunnel
+void drawTunnel()
+{
+	int numPoints = 7;
+	// Outer Points
+	float ox[numPoints] = {-24, -20, -14, 0, 14, 20, 24};
+	float oy[numPoints] = {0, 15, 21, 24, 21, 15, 0};
+	// Inner Points
+	float ix[numPoints] = {-10, -10, -10, 0, 10, 10, 10};
+	float iy[numPoints] = {0, 9, 18, 19, 18, 9, 0};
+
+	int numPointSpan = 150;
+	int startPoint = 20;
+
+	int endPoint = startPoint + numPointSpan;
+	if (endPoint >= NPTS) endPoint -= NPTS;
+	else if (endPoint < 0) endPoint += NPTS;
+
+
+	// End Caps
+	for (int pathPoint : {startPoint, numPointSpan + startPoint}) {
+		glColor3f(0.2, 0.4, 0.2);
+		glBegin(GL_QUAD_STRIP);
+			float u[2];
+			getPathPointVector(u, pathPoint);
+			float v[2] = {u[1], -u[0]};
+			if (pathPoint == startPoint)
+			normal(
+				ptx[pathPoint] - (v[0] * ox[0]), oy[0], ptz[pathPoint] - (v[1] * ox[0]),
+				ptx[pathPoint] - (v[0] * ix[0]), iy[0], ptz[pathPoint] - (v[1] * ix[0]),
+				ptx[pathPoint] - (v[0] * ix[1]), iy[1], ptz[pathPoint] - (v[1] * ix[1])
+			);
+			else
+			normal(
+				ptx[pathPoint] - (v[0] * ix[1]), iy[1], ptz[pathPoint] - (v[1] * ix[1]),
+				ptx[pathPoint] - (v[0] * ix[0]), iy[0], ptz[pathPoint] - (v[1] * ix[0]),
+				ptx[pathPoint] - (v[0] * ox[0]), oy[0], ptz[pathPoint] - (v[1] * ox[0])
+			);
+			for (int i = 0; i < numPoints; i++) {
+
+				glVertex3f(ptx[pathPoint] - (v[0] * ox[i]), oy[i], ptz[pathPoint] - (v[1] * ox[i]));
+				glVertex3f(ptx[pathPoint] - (v[0] * ix[i]), iy[i], ptz[pathPoint] - (v[1] * ix[i]));
+			}
+		glEnd();
+	}
+
+
+	for (int point = startPoint; point < numPointSpan + startPoint; point++) {
+		int i = point;
+		if (i >= NPTS) i -= NPTS;
+
+		// Outer
+		glColor3f(0.2, 0.4, 0.2);
+		glBegin(GL_QUAD_STRIP);
+			for (int j = 0; j < numPoints; j++) {
+				float u[2];
+				getPathPointVector(u, i);
+				float v[2] = {u[1], -u[0]};
+				normal(
+					ptx[i] - (v[0] * ox[j]), oy[j], ptz[i] - (v[1] * ox[j]),
+					ptx[i] - (v[0] * ox[j+1]), oy[j+1], ptz[i] - (v[1] * ox[j+1]),
+					ptx[i+1] - (v[0] * ox[j]), oy[j], ptz[i+1] - (v[1] * ox[j])
+				);
+				glVertex3f(ptx[i] - (v[0] * ox[j]), oy[j], ptz[i] - (v[1] * ox[j]));
+
+				getPathPointVector(u, i+1);
+				float w[2] = {u[1], -u[0]};
+				glVertex3f(ptx[i+1] - (w[0] * ox[j]), oy[j], ptz[i+1] - (w[1] * ox[j]));
+			}
+		glEnd();
+
+		// Inner
+		glColor3f(0.3, 0.3, 0.3);
+		glBegin(GL_QUAD_STRIP);
+			for (int j = 0; j < numPoints; j++) {
+				float u[2];
+				getPathPointVector(u, i);
+				float v[2] = {u[1], -u[0]};
+				normal(
+					ptx[i+1] - (v[0] * ix[j]), iy[j], ptz[i+1] - (v[1] * ix[j]),
+					ptx[i] - (v[0] * ix[j+1]), iy[j+1], ptz[i] - (v[1] * ix[j+1]),
+					ptx[i] - (v[0] * ix[j]), iy[j], ptz[i] - (v[1] * ix[j])
+				);
+				glVertex3f(ptx[i] - (v[0] * ix[j]), iy[j], ptz[i] - (v[1] * ix[j]));
+
+				getPathPointVector(u, i+1);
+				float w[2] = {u[1], -u[0]};
+				glVertex3f(ptx[i+1] - (w[0] * ix[j]), iy[j], ptz[i+1] - (w[1] * ix[j]));
+			}
+		glEnd();
+	}
+
+
 }
 
 
@@ -247,12 +373,17 @@ void display(void)
 		glPopMatrix();
 
 		// Draw wagons
-		for (int i = 1; i<4; i++) {
+		for (int i = 0; i<3; i++) {
 			glPushMatrix();
-				railVehicle(-23 * i);
+				railVehicle(-23 * (i+1));
 				wagon();
 			glPopMatrix();
 		}
+	glPopMatrix();
+
+	glPushMatrix();
+		glTranslatef(0, 0.1, 0);
+		drawTunnel();
 	glPopMatrix();
 
 	// Draw tracks
