@@ -184,3 +184,117 @@ void wagon()
       glutSolidCube(1.0);
     glPopMatrix();
 }
+
+
+// Station
+void station()
+{
+	glColor3f(0.5, 0.5, 0.5);
+
+	glTranslatef(0, 0, 50);
+	// Platform
+	glPushMatrix();
+		glBegin(GL_QUADS);
+			glNormal3f(-1, 0, 0);
+			glVertex3f(-50, 0, 0);
+			glVertex3f(-50, 0, 20);
+			glVertex3f(-50, 5, 20);
+			glVertex3f(-50, 5, 0);
+
+			glNormal3f(1, 0, 0);
+			glVertex3f(50, 0, 0);
+			glVertex3f(50, 0, 20);
+			glVertex3f(50, 5, 20);
+			glVertex3f(50, 5, 0);
+
+			glNormal3f(0, 0, -1);
+			glVertex3f(-50, 0, 0);
+			glVertex3f(50, 0, 0);
+			glVertex3f(50, 5, 0);
+			glVertex3f(-50, 5, 0);
+
+			glNormal3f(0, 0, 1);
+			glVertex3f(50, 0, 20);
+			glVertex3f(-50, 0, 20);
+			glVertex3f(-50, 5, 20);
+			glVertex3f(50, 5, 20);
+
+			glNormal3f(0, 1, 0);
+			glVertex3f(50, 5, 20);
+			glVertex3f(-50, 5, 20);
+			glVertex3f(-50, 5, 0);
+			glVertex3f(50, 5, 0);
+		glEnd();
+	glPopMatrix();
+
+	// Building
+	glPushMatrix();
+		glTranslatef(0, 0, 20);
+		glBegin(GL_QUADS);
+			glNormal3f(-1, 0, 0);
+			glVertex3f(-50, 0, 0);
+			glVertex3f(-50, 0, 20);
+			glVertex3f(-50, 20, 20);
+			glVertex3f(-50, 20, 0);
+
+			glNormal3f(1, 0, 0);
+			glVertex3f(50, 0, 0);
+			glVertex3f(50, 0, 20);
+			glVertex3f(50, 20, 20);
+			glVertex3f(50, 20, 0);
+
+			glNormal3f(0, 0, -1);
+			glVertex3f(-50, 0, 0);
+			glVertex3f(50, 0, 0);
+			glVertex3f(50, 20, 0);
+			glVertex3f(-50, 20, 0);
+
+			glNormal3f(0, 0, 1);
+			glVertex3f(50, 0, 20);
+			glVertex3f(-50, 0, 20);
+			glVertex3f(-50, 20, 20);
+			glVertex3f(50, 20, 20);
+
+			glNormal3f(0, 1, 0);
+			glVertex3f(50, 20, 20);
+			glVertex3f(-50, 20, 20);
+			glVertex3f(-50, 20, 0);
+			glVertex3f(50, 20, 0);
+		glEnd();
+	glPopMatrix();
+
+	// Roof
+	glPushMatrix();
+		glBegin(GL_QUADS);
+			glNormal3f(0, 0.8944, -0.4473);
+			glVertex3f(50, 30, 20);
+			glVertex3f(-50, 30, 20);
+			glVertex3f(-50, 20, 0);
+			glVertex3f(50, 20, 0);
+
+			glNormal3f(0, 0.8944, 0.4473);
+			glVertex3f(50, 30, 20);
+			glVertex3f(-50, 30, 20);
+			glVertex3f(-50, 20, 40);
+			glVertex3f(50, 20, 40);
+
+			glNormal3f(0, -1, 0);
+			glVertex3f(50, 20, 0);
+			glVertex3f(-50, 20, 0);
+			glVertex3f(-50, 20, 40);
+			glVertex3f(50, 20, 40);
+		glEnd();
+
+		glBegin(GL_TRIANGLES);
+			glNormal3f(1, 0, 0);
+			glVertex3f(50, 20, 40);
+			glVertex3f(50, 30, 20);
+			glVertex3f(50, 20, 0);
+
+			glNormal3f(-1, 0, 0);
+			glVertex3f(-50, 20, 40);
+			glVertex3f(-50, 30, 20);
+			glVertex3f(-50, 20, 0);
+		glEnd();
+	glPopMatrix();
+}

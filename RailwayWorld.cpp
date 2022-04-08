@@ -379,6 +379,8 @@ void display(void)
 				wagon();
 			glPopMatrix();
 		}
+
+		station();
 	glPopMatrix();
 
 	glPushMatrix();
@@ -389,6 +391,8 @@ void display(void)
 	// Draw tracks
 	drawRail();
 	drawSleepers();
+
+	station();
 
 
 	glutSwapBuffers();   //Useful for animation
